@@ -1,0 +1,32 @@
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+public class AutomationApp {
+    public static void main(String[] args) {
+        // Set the path to the ChromeDriver executable
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+
+        // Create a Chrome WebDriver
+        WebDriver driver = new ChromeDriver();
+
+        try {
+            // Navigate to a website
+            driver.get("https://www.google.com");
+
+            // Find an element and perform an action
+            WebElement signInButton = driver.findElement(By.name("btnK"));
+            signInButton.click();
+
+            // Add more Selenium actions as needed
+
+            // Close the WebDriver
+            driver.quit();
+
+            System.out.println("Selenium script executed successfully");
+        } catch (Exception e) {
+            System.err.println("Error executing script: " + e.getMessage());
+        }
+    }
+}
