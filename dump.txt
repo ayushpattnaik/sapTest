@@ -1,32 +1,61 @@
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+REPORT zdynamic_alv_ida.
 
-public class AutomationApp {
-    public static void main(String[] args) {
-        // Set the path to the ChromeDriver executable
-        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+TABLES: dd02l.
 
-        // Create a Chrome WebDriver
-        WebDriver driver = new ChromeDriver();
+TYPES: BEGIN OF ty_dd02l,
+         tabname TYPE dd02l-tabname,
+         as4local TYPE dd02l-as4local,
+       END OF ty_dd02l.
 
-        try {
-            // Navigate to a website
-            driver.get("https://www.google.com");
+DATA: it_dd02l TYPE STANDARD TABLE OF ty_dd02l,
+      wa_dd02l TYPE ty_dd02l.
 
-            // Find an element and perform an action
-            WebElement signInButton = driver.findElement(By.name("btnK"));
-            signInButton.click();
+PARAMETERS: p_table TYPE dd02l-tabname OBLIGATORY.
 
-            // Add more Selenium actions as needed
+START-OF-SELECTION.
+  SELECT tabname, as4local FROM dd02l INTO TABLE it_dd02l
+    WHERE tabclass IN ('TRANSP', 'VIEW') AND as4local = 'A'
+    ORDER BY tabname.
 
-            // Close the WebDriver
-            driver.quit();
+  LOOP AT it_dd02l INTO wa_dd02l WHERE tabname = p_table.
+    EXIT.
+  ENDLOOP.
 
-            System.out.println("Selenium script executed successfully");
-        } catch (Exception e) {
-            System.err.println("Error executing script: " + e.getMessage());
-        }
-    }
-}
+  IF sy-subrc <> 0.
+    WRITE: / 'Table or view not found.'.
+    EXIT.
+  ENDIF.
+
+DATA: lr_data_descr   TYPE REF TO data,
+      lr_table_descr  TYPE REF TO cl_abap_tabledescr,
+      lr_struct_descr TYPE REF TO cl_abap_structdescr,
+      lt_components   TYPE cl_abap_structdescr=>component_table,
+      lt_data         TYPE REF TO data.
+
+FIELD-SYMBOLS: <lt_table> TYPE STANDARD TABLE,
+               <ls_line>  TYPE any.
+
+" Create dynamic table based on the selected table or view
+TRY.
+    lr_table_descr ?= cl_abap_tabledescr=>describe_by_name( p_table ).
+    CREATE DATA lr_data_descr TYPE HANDLE lr_table_descr.
+    ASSIGN lr_data_descr->* TO <lt_table>.
+    lr_struct_descr ?= lr_table_descr->get_table_line_type( ).
+    lt_components = lr_struct_descr->get_components( ).
+
+    SELECT * FROM (p_table) INTO CORRESPONDING FIELDS OF TABLE <lt_table>.
+  CATCH cx_root INTO DATA(lx_exception).
+    WRITE: / 'Error accessing table/view: ', lx_exception->get_text( ).
+    EXIT.
+ENDTRY.
+
+TRY.
+    cl_salv_gui_table_ida=>create_for_internal_table(
+      importing
+        r_salv_gui_table_ida = DATA(lr_alv_ida)
+      changing
+        t_table             = <lt_table> ).
+    lr_alv_ida->display( ).
+  CATCH cx_salv_ida_error INTO DATA(lx_ida_error).
+    WRITE: / 'Error displaying ALV IDA: ', lx_ida_error->get_text( ).
+ENDTRY.
