@@ -1,3 +1,16 @@
+javascript:(function(){
+    var iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.top = '10px';
+    iframe.style.right = '10px';
+    iframe.style.width = '600px';
+    iframe.style.height = '400px';
+    iframe.style.border = '2px solid black';
+    iframe.style.zIndex = '10000';
+    iframe.src = 'https://www.example.com'; // Replace with the URL you want to load
+    document.body.appendChild(iframe);
+})();
+
 REPORT zdynamic_alv_ida.
 
 TABLES: dd02l.
